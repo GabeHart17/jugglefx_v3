@@ -14,6 +14,21 @@
 #include "locator.hpp"
 #include "particle.hpp"
 
+/*
+USAGE: ./jugglefx n_objects path/to/camera/device path/to/particle/image [-f]
+
+-f sets fullscreen
+n_objects is integer for number of objects when program starts
+
+While program is running, key commands are:
+esc : exit program
+[ : decrease brightness threshold
+] : increase brightness threshold
+, : decrease image brightness
+. : increase image brightness
+numbers 1-9 : set number of objects to that number
+*/
+
 std::vector<cv::Point2f> get_points(cv::Mat&);
 
 int main(int argc, char const *argv[]) {
@@ -49,7 +64,10 @@ int main(int argc, char const *argv[]) {
   const char* WIN_NAME = "output window";
 
   cv::namedWindow(WIN_NAME, cv::WINDOW_NORMAL & cv::WINDOW_FREERATIO);
-  // cv::setWindowProperty(WIN_NAME, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+
+  if (argc > 4 && (std::string(argv[4]).compare("-f") == 0)) {
+    cv::setWindowProperty(WIN_NAME, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
+  }
 
   int threshold = 225;
   // double downscale = 0.2;
