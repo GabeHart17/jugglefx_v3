@@ -15,10 +15,9 @@
 #include "particle.hpp"
 
 /*
-USAGE: ./jugglefx n_objects path/to/camera/device path/to/particle/image [-f]
+USAGE: ./jugglefx path/to/camera/device path/to/particle/image [-f]
 
 -f sets fullscreen
-n_objects is integer for number of objects when program starts
 
 While program is running, key commands are:
 esc : exit program
@@ -41,15 +40,16 @@ enum {
 std::vector<cv::Point2f> get_points(cv::Mat&);
 
 int main(int argc, char const *argv[]) {
-  std::stringstream conv;
-  conv << argv[1];
-  int n_objects;
-  conv >> n_objects;
-  const std::string source = argv[2];
+  // std::stringstream conv;
+  // conv << argv[1];
+  // int n_objects;
+  // conv >> n_objects;
+  int n_objects = 1;
+  const std::string source = argv[1];
   int frameCounter = -1;
   int delay = 5;
 
-  const std::string particle_path = argv[3];
+  const std::string particle_path = argv[2];
   cv::Mat particle_image = cv::imread(particle_path, cv::IMREAD_COLOR);
 
   cv::VideoCapture capt(source);
@@ -74,7 +74,7 @@ int main(int argc, char const *argv[]) {
 
   cv::namedWindow(WIN_NAME, cv::WINDOW_NORMAL & cv::WINDOW_FREERATIO);
 
-  if (argc > 4 && (std::string(argv[4]).compare("-f") == 0)) {
+  if (argc > 3 && (std::string(argv[3]).compare("-f") == 0)) {
     cv::setWindowProperty(WIN_NAME, cv::WND_PROP_FULLSCREEN, cv::WINDOW_FULLSCREEN);
   }
 
