@@ -27,7 +27,16 @@ esc : exit program
 , : decrease image brightness
 . : increase image brightness
 numbers 1-9 : set number of objects to that number
+d : toggle debug dots
+s : toggle sparkle effect
+c : toggle circle effect
 */
+
+enum {
+  MODE_DEBUG = 1,
+  MODE_SPARKLE = 2,
+  MODE_CIRCLE = 4,
+};
 
 std::vector<cv::Point2f> get_points(cv::Mat&);
 
@@ -92,15 +101,19 @@ int main(int argc, char const *argv[]) {
   std::uniform_real_distribution<> angle_dist(0.0, 360.0);
   std::uniform_real_distribution<> velocity_dist(0.0, 10.0);
   std::normal_distribution<> size_dist(80.0, 20.0);
+  float circle_diameter = 100;
+  float circle_opacity = 0.2;
 
   int max_particle_age = 10;
 
-  // CircleTextureProvider provider(10, cv::Scalar(255,128,0,0));
-  ImageTextureProvider provider(particle_image);
+  CircleTextureProvider circle_provider(100, cv::Scalar(255,128,0,0));
+  ImageTextureProvider sparkle_provider(particle_image);
   // IntensityProgressionUpdater intensity_updater(1.025, 0.95);
   IntensityProgressionUpdater intensity_updater(1.1, 0.80);
   // IntensityProgressionUpdater intensity_updater(1.05, 1.0);
   std::list<Particle> particles;
+
+  unsigned int mode = 0;
 
   while (1) {
     capt >> frame;
@@ -146,22 +159,33 @@ int main(int argc, char const *argv[]) {
     for (int i = 0; i < centers.size(); i++) {
       float x = centers[i].x * output.cols;
       float y = centers[i].y * output.rows;
-      // std::cout << centers[i] << " " << x << " " << y << std::endl;
-      // cv::Scalar color = CV_RGB(0,255,0);
-      // cv::Scalar color(0,255,0,0);
-      // cv::circle(output, cv::Point(x,y), 10, color, cv::FILLED);
-      // ParticleUpdater* updater = new AllocationWrapperUpdater{&intensity_updater};
-      // ParticleUpdater* updater = new IntensityProgressionUpdater (1.025, 0.95);
-      float start_size = size_dist(prng);
-      Particle particle(
-        cv::Point2f(x,y),
-        cv::Point2f(start_size,start_size),
-        angle_dist(prng),
-        1.0,
-        &provider,
-        &intensity_updater
-      );
-      particles.push_back(particle);
+      if (mode & MODE_DEBUG) {
+        cv::Scalar color = CV_RGB(0,255,0);
+        cv::circle(output, cv::Point(x,y), 10, color, cv::FILLED);
+      }
+      if (mode & MODE_SPARKLE) {
+        float start_size = size_dist(prng);
+        Particle particle(
+          cv::Point2f(x,y),
+          cv::Point2f(start_size,start_size),
+          angle_dist(prng),
+          1.0,
+          &sparkle_provider,
+          &intensity_updater
+        );
+        particles.push_back(particle);
+      }
+      if (mode & MODE_CIRCLE) {
+        Particle particle(
+          cv::Point2f(x,y),
+          cv::Point2f(circle_diameter,circle_diameter),
+          0.0,
+          circle_opacity,
+          &circle_provider,
+          &intensity_updater
+        );
+        particles.push_back(particle);
+      }
     }
 
     for (auto it = particles.begin(); it != particles.end();) {
@@ -190,6 +214,9 @@ int main(int argc, char const *argv[]) {
       tracker.set_n_objects(n_objects);
       std::cout << "objects: " << n_objects << std::endl;
     }
+    else if (c=='d') mode ^= MODE_DEBUG;
+    else if (c=='s') mode ^= MODE_SPARKLE;
+    else if (c=='c') mode ^= MODE_CIRCLE;
     if (threshold > 255) threshold = 255;
     if (threshold < 0) threshold = 0;
     if (brightness > 255) brightness = 255;
